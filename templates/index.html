@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="app">
+
+    <header class="header">
+        <div class="brand">
+            <div class="logo">🤖</div>
+
+            <div>
+                <h1>AI Assistant</h1>
+                <p>Your Intelligent Prompt Engineering Assistant</p>
+            </div>
+        </div>
+
+        <div class="powered">
+            ✨ Powered by Gemini AI
+        </div>
+    </header>
+
+
+    <main class="workspace">
+
+        <section class="panel input-panel">
+
+            <div class="section-heading">
+                <div class="section-icon">✨</div>
+                <div>
+                    <h2>Choose a Function</h2>
+                    <p>Select what you want the AI to do</p>
+                </div>
+            </div>
+
+
+            <form method="POST" id="aiForm">
+
+                <select name="function" id="functionSelect">
+
+                    <option value="question">
+                        Answer Questions
+                    </option>
+
+                    <option value="summary">
+                        Summarize Text
+                    </option>
+
+                    <option value="creative">
+                        Creative Content
+                    </option>
+
+                </select>
+
+
+                <div class="function-cards">
+
+                    <button
+                        type="button"
+                        class="function-card active"
+                        data-value="question">
+
+                        <span class="card-icon blue">💬</span>
+
+                        <strong>Answer Questions</strong>
+
+                        <small>
+                            Get detailed and accurate answers
+                        </small>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="function-card"
+                        data-value="summary">
+
+                        <span class="card-icon green">📄</span>
+
+                        <strong>Summarize Text</strong>
+
+                        <small>
+                            Turn long text into key points
+                        </small>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="function-card"
+                        data-value="creative">
+
+                        <span class="card-icon orange">✏️</span>
+
+                        <strong>Creative Content</strong>
+
+                        <small>
+                            Generate creative ideas and content
+                        </small>
+
+                    </button>
+
+                </div>
+
+
+                <div class="query-title">
+
+                    <div class="section-icon">💬</div>
+
+                    <div>
+                        <h2>Enter Your Query</h2>
+                        <p>
+                            Type your question or paste your text below
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="textarea-wrapper">
+
+                    <textarea
+                        id="userInput"
+                        name="user_input"
+                        maxlength="4000"
+                        required
+                        placeholder="What would you like to ask AI?"></textarea>
+
+                    <div class="textarea-footer">
+
+                        <span>
+                            Be clear and specific for better results
+                        </span>
+
+                        <span id="counter">
+                            0 / 4000
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="generate-btn"
+                    id="generateBtn">
+
+                    <span>✨</span>
+                    <span id="buttonText">
+                        Generate Response
+                    </span>
+
+                </button>
+
+            </form>
+
+        </section>
+
+
+
+        <section class="panel response-panel">
+
+            <div class="response-header">
+
+                <div class="section-heading response-title">
+
+                    <div class="section-icon">✨</div>
+
+                    <div>
+                        <h2>AI Response</h2>
+                        <p>Your generated result will appear here</p>
+                    </div>
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        type="button"
+                        onclick="copyResponse()">
+                        📋 Copy
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="clearResponse()">
+                        🗑 Clear
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="downloadResponse()">
+                        ⬇ Download
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="response-content"
+                id="responseContent">
+
+                {% if response %}
+
+                    {{ response | safe }}
+
+                {% else %}
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ✨
+                        </div>
+
+                        <h3>
+                            Your AI response will appear here
+                        </h3>
+
+                        <p>
+                            Choose a function, enter your query
+                            and click Generate Response.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer class="footer">
+
+        <div>
+            💡 <strong>Tip:</strong>
+            Be specific in your queries to get better results.
+            You can ask questions, summarize text or generate
+            creative content.
+        </div>
+
+        <div class="status">
+            <span></span>
+            AI Ready
+        </div>
+
+    </footer>
+
+</div>
+
+
+
+<script>
+
+const select = document.getElementById("functionSelect");
+const cards = document.querySelectorAll(".function-card");
+const textarea = document.getElementById("userInput");
+const counter = document.getElementById("counter");
+const form = document.getElementById("aiForm");
+const buttonText = document.getElementById("buttonText");
+const generateBtn = document.getElementById("generateBtn");
+
+
+cards.forEach(card => {
+
+    card.addEventListener("click", () => {
+
+        cards.forEach(c => {
+            c.classList.remove("active");
+        });
+
+        card.classList.add("active");
+
+        select.value = card.dataset.value;
+
+    });
+
+});
+
+
+select.addEventListener("change", () => {
+
+    cards.forEach(card => {
+
+        card.classList.toggle(
+            "active",
+            card.dataset.value === select.value
+        );
+
+    });
+
+});
+
+
+textarea.addEventListener("input", () => {
+
+    counter.textContent =
+        textarea.value.length + " / 4000";
+
+});
+
+
+form.addEventListener("submit", () => {
+
+    generateBtn.disabled = true;
+
+    buttonText.textContent =
+        "Generating...";
+
+});
+
+
+function copyResponse() {
+
+    const response =
+        document.getElementById("responseContent").innerText;
+
+    navigator.clipboard.writeText(response)
+        .then(() => {
+
+            alert("Response copied!");
+
+        });
+
+}
+
+
+function clearResponse() {
+
+    const response =
+        document.getElementById("responseContent");
+
+    response.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">✨</div>
+            <h3>Your AI response will appear here</h3>
+            <p>
+                Choose a function, enter your query
+                and click Generate Response.
+            </p>
+        </div>
+    `;
+
+}
+
+
+function downloadResponse() {
+
+    const response =
+        document.getElementById("responseContent").innerText;
+
+    const blob =
+        new Blob([response], {
+            type: "text/plain"
+        });
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+    link.download = "AI_Response.txt";
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+
+}
+
+</script>
+
+</body>
+</html>
