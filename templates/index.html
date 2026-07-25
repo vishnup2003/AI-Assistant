@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AI Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
@@ -12,18 +18,22 @@
 <div class="app">
 
     <header class="header">
+
         <div class="brand">
+
             <div class="logo">🤖</div>
 
             <div>
                 <h1>AI Assistant</h1>
                 <p>Your Intelligent Prompt Engineering Assistant</p>
             </div>
+
         </div>
 
         <div class="powered">
             ✨ Powered by Gemini AI
         </div>
+
     </header>
 
 
@@ -32,11 +42,14 @@
         <section class="panel input-panel">
 
             <div class="section-heading">
+
                 <div class="section-icon">✨</div>
+
                 <div>
                     <h2>Choose a Function</h2>
                     <p>Select what you want the AI to do</p>
                 </div>
+
             </div>
 
 
@@ -44,15 +57,18 @@
 
                 <select name="function" id="functionSelect">
 
-                    <option value="question">
+                    <option value="question"
+                        {% if selected_function == "question" %}selected{% endif %}>
                         Answer Questions
                     </option>
 
-                    <option value="summary">
+                    <option value="summary"
+                        {% if selected_function == "summary" %}selected{% endif %}>
                         Summarize Text
                     </option>
 
-                    <option value="creative">
+                    <option value="creative"
+                        {% if selected_function == "creative" %}selected{% endif %}>
                         Creative Content
                     </option>
 
@@ -63,7 +79,7 @@
 
                     <button
                         type="button"
-                        class="function-card active"
+                        class="function-card"
                         data-value="question">
 
                         <span class="card-icon blue">💬</span>
@@ -117,6 +133,7 @@
 
                     <div>
                         <h2>Enter Your Query</h2>
+
                         <p>
                             Type your question or paste your text below
                         </p>
@@ -132,7 +149,7 @@
                         name="user_input"
                         maxlength="4000"
                         required
-                        placeholder="What would you like to ask AI?"></textarea>
+                        placeholder="What would you like to ask AI?">{{ user_input or '' }}</textarea>
 
                     <div class="textarea-footer">
 
@@ -155,6 +172,7 @@
                     id="generateBtn">
 
                     <span>✨</span>
+
                     <span id="buttonText">
                         Generate Response
                     </span>
@@ -164,7 +182,6 @@
             </form>
 
         </section>
-
 
 
         <section class="panel response-panel">
@@ -212,28 +229,24 @@
                 class="response-content"
                 id="responseContent">
 
-                {% if response %}
+                {% if not response %}
 
-                    {{ response | safe }}
+                <div class="empty-state">
 
-                {% else %}
-
-                    <div class="empty-state">
-
-                        <div class="empty-icon">
-                            ✨
-                        </div>
-
-                        <h3>
-                            Your AI response will appear here
-                        </h3>
-
-                        <p>
-                            Choose a function, enter your query
-                            and click Generate Response.
-                        </p>
-
+                    <div class="empty-icon">
+                        ✨
                     </div>
+
+                    <h3>
+                        Your AI response will appear here
+                    </h3>
+
+                    <p>
+                        Choose a function, enter your query
+                        and click Generate Response.
+                    </p>
+
+                </div>
 
                 {% endif %}
 
@@ -263,7 +276,6 @@
 </div>
 
 
-
 <script>
 
 const select = document.getElementById("functionSelect");
@@ -273,26 +285,10 @@ const counter = document.getElementById("counter");
 const form = document.getElementById("aiForm");
 const buttonText = document.getElementById("buttonText");
 const generateBtn = document.getElementById("generateBtn");
+const responseContent = document.getElementById("responseContent");
 
 
-cards.forEach(card => {
-
-    card.addEventListener("click", () => {
-
-        cards.forEach(c => {
-            c.classList.remove("active");
-        });
-
-        card.classList.add("active");
-
-        select.value = card.dataset.value;
-
-    });
-
-});
-
-
-select.addEventListener("change", () => {
+function updateActiveCard() {
 
     cards.forEach(card => {
 
@@ -303,31 +299,56 @@ select.addEventListener("change", () => {
 
     });
 
+}
+
+
+cards.forEach(card => {
+
+    card.addEventListener("click", () => {
+
+        select.value = card.dataset.value;
+
+        updateActiveCard();
+
+    });
+
 });
 
 
-textarea.addEventListener("input", () => {
+select.addEventListener("change", () => {
+
+    updateActiveCard();
+
+});
+
+
+function updateCounter() {
 
     counter.textContent =
         textarea.value.length + " / 4000";
 
-});
+}
+
+
+textarea.addEventListener("input", updateCounter);
 
 
 form.addEventListener("submit", () => {
 
     generateBtn.disabled = true;
 
-    buttonText.textContent =
-        "Generating...";
+    buttonText.textContent = "Generating...";
 
 });
 
 
 function copyResponse() {
 
-    const response =
-        document.getElementById("responseContent").innerText;
+    const response = responseContent.innerText.trim();
+
+    if (!response) {
+        return;
+    }
 
     navigator.clipboard.writeText(response)
         .then(() => {
@@ -341,17 +362,22 @@ function copyResponse() {
 
 function clearResponse() {
 
-    const response =
-        document.getElementById("responseContent");
-
-    response.innerHTML = `
+    responseContent.innerHTML = `
         <div class="empty-state">
-            <div class="empty-icon">✨</div>
-            <h3>Your AI response will appear here</h3>
+
+            <div class="empty-icon">
+                ✨
+            </div>
+
+            <h3>
+                Your AI response will appear here
+            </h3>
+
             <p>
                 Choose a function, enter your query
                 and click Generate Response.
             </p>
+
         </div>
     `;
 
@@ -360,28 +386,50 @@ function clearResponse() {
 
 function downloadResponse() {
 
-    const response =
-        document.getElementById("responseContent").innerText;
+    const response = responseContent.innerText.trim();
 
-    const blob =
-        new Blob([response], {
-            type: "text/plain"
-        });
+    if (!response) {
+        return;
+    }
 
-    const url =
-        URL.createObjectURL(blob);
+    const blob = new Blob(
+        [response],
+        {
+            type: "text/plain;charset=utf-8"
+        }
+    );
 
-    const link =
-        document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
 
     link.href = url;
+
     link.download = "AI_Response.txt";
 
+    document.body.appendChild(link);
+
     link.click();
+
+    document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
 
 }
+
+
+updateActiveCard();
+
+updateCounter();
+
+
+{% if response %}
+
+const rawResponse = {{ response | tojson }};
+
+responseContent.innerHTML = marked.parse(rawResponse);
+
+{% endif %}
 
 </script>
 
