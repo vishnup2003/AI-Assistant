@@ -4,6 +4,7 @@ import os
 
 app = Flask(__name__)
 
+# Get Gemini API key from environment variable
 api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
@@ -25,44 +26,68 @@ def home():
         user_input = request.form.get("user_input", "").strip()
 
         if not user_input:
-            response = "Please enter some text first."
+            response = "⚠️ Please enter some text first."
 
         else:
 
+            # -------------------------
+            # QUESTION ANSWERING
+            # -------------------------
             if selected_function == "question":
 
                 prompt = f"""
 You are a helpful educational AI assistant.
 
 Answer the following question accurately and clearly.
-Use simple language suitable for a college student.
-Explain important concepts properly and give examples where useful.
+
+Instructions:
+- Use simple language suitable for a college student.
+- Explain important concepts properly.
+- Use headings where useful.
+- Use bullet points when appropriate.
+- Give examples where they help understanding.
+- Format the response using Markdown.
 
 Question:
 {user_input}
 """
 
+            # -------------------------
+            # SUMMARIZATION
+            # -------------------------
             elif selected_function == "summary":
 
                 prompt = f"""
 You are a helpful AI summarization assistant.
 
 Summarize the following text clearly and concisely.
-Keep all important information.
-Remove unnecessary repetition.
-Use simple and easy-to-understand language.
+
+Instructions:
+- Keep all important information.
+- Remove unnecessary repetition.
+- Use simple and easy-to-understand language.
+- Organize key information using bullet points.
+- Use Markdown formatting.
 
 Text:
 {user_input}
 """
 
+            # -------------------------
+            # CREATIVE CONTENT
+            # -------------------------
             elif selected_function == "creative":
 
                 prompt = f"""
 You are a creative writing assistant.
 
-Create high-quality creative content based on the following user request.
-Make the content interesting, clear, and appropriate for the user's request.
+Create high-quality creative content based on the user's request.
+
+Instructions:
+- Make the content interesting and engaging.
+- Follow the user's requirements carefully.
+- Keep the writing clear and well structured.
+- Use Markdown formatting where appropriate.
 
 Request:
 {user_input}
@@ -70,19 +95,60 @@ Request:
 
             else:
                 prompt = None
-                response = "Please select a valid function."
+                response = "⚠️ Please select a valid function."
 
+            # -------------------------
+            # GEMINI API CALL
+            # -------------------------
             if prompt:
+
                 try:
+
                     ai_response = client.models.generate_content(
                         model="gemini-3-flash-preview",
                         contents=prompt
                     )
 
-                    response = ai_response.text
+                    if ai_response.text:
+                        response = ai_response.text
+                    else:
+                        response = (
+                            "⚠️ The AI did not return a response. "
+                            "Please try again."
+                        )
 
                 except Exception as e:
-                    response = "Error: " + str(e)
+
+                    error_message = str(e)
+
+                    # Handle API quota / rate-limit errors
+                    if (
+                        "429" in error_message
+                        or "RESOURCE_EXHAUSTED" in error_message
+                        or "quota" in error_message.lower()
+                    ):
+                        response = """
+## ⚠️ AI Usage Limit Reached
+
+The Gemini API usage limit has temporarily been reached.
+
+Please wait for the API quota to reset and try again later.
+
+Your AI Assistant is working correctly — this is a temporary
+API usage limitation.
+"""
+
+                    # Other Gemini/API errors
+                    else:
+                        print(f"Gemini API Error: {error_message}")
+
+                        response = """
+## ⚠️ Something went wrong
+
+The AI service is temporarily unavailable.
+
+Please try again in a few moments.
+"""
 
     return render_template(
         "index.html",
